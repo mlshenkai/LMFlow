@@ -5,10 +5,14 @@
 """
 import logging
 import json
+import os
+import sys
+sys.path.remove(os.path.abspath(os.path.dirname(sys.argv[0])))
 import warnings
 
 from dataclasses import dataclass, field
 from transformers import HfArgumentParser
+from typing import Optional
 
 from lmflow.datasets.dataset import Dataset
 from lmflow.pipeline.auto_pipeline import AutoPipeline
@@ -22,7 +26,30 @@ warnings.filterwarnings("ignore")
 
 @dataclass
 class ChatbotArguments:
-    pass
+    prompt_structure: Optional[str] = field(
+        default="{input_text}",
+        metadata={
+            "help": "prompt structure given user's input text"
+        },
+    )
+    end_string: Optional[str] = field(
+        default="\n\n",
+        metadata={
+            "help": "end string mark of the chatbot's output"
+        },
+    )
+    max_new_tokens: Optional[int] = field(
+        default=200,
+        metadata={
+            "help": "maximum number of generated tokens"
+        },
+    )
+    temperature: Optional[float] = field(
+        default=0.7,
+        metadata={
+            "help": "higher this value, more random the model output"
+        },
+    )
 
 
 def main():
@@ -45,6 +72,7 @@ def main():
         model_args,
         tune_strategy='none',
         ds_config=ds_config,
+        device=pipeline_args.device,
     )
 
     # We don't need input data, we will read interactively from stdin
@@ -70,47 +98,63 @@ def main():
         f"#############################################################################\n"
         "\n"
     )
-    print(guide_message, end="")
+    print(guide_message)
 
     # context = (
     #     "You are a helpful assistant who follows the given instructions"
     #     " unconditionally."
     # )
     context = ""
-    end_string = "\n\n"
+
+    end_string = chatbot_args.end_string
+    prompt_structure = chatbot_args.prompt_structure
 
     while True:
         input_text = input("User >>> ")
-        if not input_text:
+        if input_text == "exit":
             print("exit...")
             break
+        elif input_text == "reset":
+            context = ""
+            print("Chat history cleared")
+            continue
+        if not input_text:
+            input_text = " "
 
-        context += input_text
+        context += prompt_structure.format(input_text=input_text)
+        context = context[-model.get_max_length():]     # Memory of the bot
 
         input_dataset = dataset.from_dict({
             "type": "text_only",
             "instances": [ { "text": context } ]
         })
 
-        output_dataset = inferencer.inference(
-            model=model,
-            dataset=input_dataset,
-            max_new_tokens=200,
-            temperature=0.7,
-        )
+        print("Bot: ", end="")
+        print_index = 0
 
-        response = output_dataset.to_dict()["instances"][0]["text"]
+        token_per_step = 4
 
-        try:
-            index = response.index(end_string)
-        except ValueError:
-            response += end_string
-            index = response.index(end_string)
+        for response, flag_break in inferencer.stream_inference(context=context, model=model, max_new_tokens=chatbot_args.max_new_tokens, 
+                                    token_per_step=token_per_step, temperature=chatbot_args.temperature,
+                                    end_string=end_string, input_dataset=input_dataset):
+            
+            # Prints characters in the buffer
+            new_print_index = print_index
+            for char in response[print_index:]:
+                if end_string is not None and char == end_string[0]:
+                    if new_print_index + len(end_string) >= len(response):
+                        break
 
-        response = response[:index + 1]
-        print("Bot: " + response, end="")
-        context += response
-        context = context[-model.get_max_length():]     # Memory of the bot
+                new_print_index += 1
+                print(char, end="", flush=True)
+
+            print_index = new_print_index
+
+            if flag_break:
+                break
+        print("\n", end="")
+
+        context += response + "\n"
 
 
 if __name__ == "__main__":

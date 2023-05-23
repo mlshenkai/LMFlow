@@ -14,6 +14,9 @@ Typical usage example:
   bar = foo.FunctionBar()
 """
 import json
+import os
+import sys
+sys.path.remove(os.path.abspath(os.path.dirname(sys.argv[0])))
 from transformers import HfArgumentParser
 
 from lmflow.datasets.dataset import Dataset
@@ -31,7 +34,12 @@ model_args, data_args, pipeline_args = parser.parse_args_into_dataclasses()
 with open (pipeline_args.deepspeed, "r") as f:
     ds_config = json.load(f)
 
-model = AutoModel.get_model(model_args, tune_strategy='none', ds_config=ds_config)
+model = AutoModel.get_model(
+    model_args, 
+    tune_strategy='none', 
+    ds_config=ds_config, 
+    use_accelerator=pipeline_args.use_accelerator_for_evaluator
+)
 dataset = Dataset(data_args)
 
 evaluator = AutoPipeline.get_pipeline(
@@ -40,7 +48,4 @@ evaluator = AutoPipeline.get_pipeline(
     data_args=data_args,
     pipeline_args=pipeline_args,
 )
-# Demo for evaluating accuracy(default)
-# evaluator.evaluate(model=model, dataset=dataset, metric='acc')
-# Demo for evaluating ppl
-evaluator.evaluate(model=model, dataset=dataset, metric='ppl')
+evaluator.evaluate(model=model, dataset=dataset, metric=pipeline_args.metric)

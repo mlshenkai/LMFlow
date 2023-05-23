@@ -21,6 +21,9 @@ from lmflow.models.hf_decoder_model import HFDecoderModel
 from lmflow.utils.data_utils import set_random_seed, batchlize, answer_extraction
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # To avoid warnings about parallelism in tokenizers
 
+def rstrip_partial_utf8(string):
+    return string.replace("\ufffd", "")
+
 class Inferencer(BasePipeline):
     """
     Initializes the `Inferencer` class with given arguments.
@@ -47,10 +50,17 @@ class Inferencer(BasePipeline):
 
         self.local_rank = int(os.getenv("LOCAL_RANK", "0"))
         self.world_size = int(os.getenv("WORLD_SIZE", "1"))
-        torch.cuda.set_device(self.local_rank)  # NOTE: cpu-only machine will have error
-        deepspeed.init_distributed()
+        if inferencer_args.device == "gpu":
+            torch.cuda.set_device(self.local_rank)  # NOTE: cpu-only machine will have error
+            deepspeed.init_distributed()
+        else:
+            os.environ["MASTER_ADDR"] = "localhost"
+            os.environ["MASTER_PORT"] = "15000"
+            dist.init_process_group(
+                "gloo", rank=self.local_rank, world_size=self.world_size
+            )
 
-        self.config = AutoConfig.from_pretrained(model_args.model_name_or_path)
+        self.config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
         try: 
             self.model_hidden_size = self.config.hidden_size
         except:
@@ -119,11 +129,21 @@ class Inferencer(BasePipeline):
 
             input = prompt_structure.format(input=current_batch['input'])
 
-            inputs = model.encode(input, return_tensors="pt").to(device=self.local_rank)
+            if self.inferencer_args.device == "gpu":
+                inputs = model.encode(input, return_tensors="pt").to(device=self.local_rank)
+            elif self.inferencer_args.device == "cpu":
+                inputs = model.encode(input, return_tensors="pt").to(device='cpu')
+            else:
+                raise NotImplementedError(
+                    f"device \"{self.inferencer_args.device}\" is not supported"
+                )
+
             outputs = model.inference(
                 inputs,
                 max_new_tokens=max_new_tokens,
-                temperature=temperature
+                temperature=temperature,
+                repetition_penalty=1.0,
+                do_sample=self.inferencer_args.do_sample,
             )
             text_out = model.decode(outputs[0], skip_special_tokens=True)
 
@@ -136,3 +156,40 @@ class Inferencer(BasePipeline):
         output_dataset = output_dataset.from_dict(output_dict)
 
         return output_dataset
+    
+    def stream_inference(self, context, model, max_new_tokens, token_per_step, temperature, end_string, input_dataset):
+        response = ""
+        history = []
+        if "ChatGLMModel" in self.config.architectures:
+            for response, history in model.get_backend_model().stream_chat(model.get_tokenizer(), context, history=history):
+                response = rstrip_partial_utf8(response)
+                yield response, False
+        else:
+            for _ in range(0, max_new_tokens // token_per_step):
+                output_dataset = self.inference(
+                    model=model,
+                    dataset=input_dataset,
+                    max_new_tokens=token_per_step,
+                    temperature=temperature,
+                )
+
+                new_append_text = output_dataset.to_dict()["instances"][0]["text"]
+                new_append_text = rstrip_partial_utf8(new_append_text)
+                response += new_append_text
+
+                input_dict = input_dataset.to_dict()
+                input_dict["instances"][0]["text"] += new_append_text
+
+                input_dataset = input_dataset.from_dict(input_dict)
+
+                flag_break = False
+                try:
+                    index = response.index(end_string)
+                    flag_break = True
+                except ValueError:
+                    response += end_string
+                    index = response.index(end_string)
+
+                response = response[:index]
+
+                yield response, flag_break

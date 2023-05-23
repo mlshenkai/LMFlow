@@ -20,7 +20,7 @@
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/OptimalScale/LMFlow/blob/main/LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![Doc](https://img.shields.io/badge/Website-Doc-ff69b4.svg)](https://optimalscale.github.io/LMFlow/)
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/04/ibvpAk.jpeg)
 
@@ -136,6 +136,10 @@ LLaMA 33B (LoRA)의 성능은 단일 8 \* A100 서버로 PubMedQA와 MedMCQA의 
 
 
 ## 1.Setup
+
+소프트웨어 패키지는 Linux 운영 체제(Ubuntu 20.04)에서 완전히 테스트되었습니다. 다른 운영 체제 플랫폼(MacOS, Windows)은 아직 완전히 테스트되지 않았습니다.
+예상치 못한 오류가 발생할 수 있습니다.Linux 시스템에서 먼저 시도하거나 Google Colab을 사용하여 경험할 수 있습니다.
+
 ```bash
 git clone https://github.com/OptimalScale/LMFlow.git
 cd LMFlow
@@ -322,7 +326,7 @@ cd -
 
 초보자든 전문가든 상관없이 이 플랫폼에서 혜택을 받을 수 있을 것이라고 믿습니다. 함께 활기차고 혁신적인 LLM 커뮤니티를 만들어 봅시다!
 
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/04/ibvpAk.jpeg)
 

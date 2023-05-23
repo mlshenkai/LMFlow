@@ -20,7 +20,7 @@
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/OptimalScale/LMFlow/blob/main/LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![Doc](https://img.shields.io/badge/Website-Doc-ff69b4.svg)](https://optimalscale.github.io/LMFlow/)
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/04/ibvpAk.jpeg)
 
@@ -140,6 +140,7 @@ LLaMA, GPT2, GPT-Neo, Galactica, को पूरी तरह से टेस�
 ## 1.Setup
 
 हमारी पैकेजिंग लिनक्स ओएस (उबंटू 20.04) पर पूरी तरह से टेस्ट की गई है। अन्य ओएस प्लेटफॉर्म (MacOS, Windows) पूरी तरह से टेस्ट नहीं किए गए हैं।
+आप कुछ अप्रत्याशित त्रुटियों से मिल सकते हैं. आप इसे पहले लिनक्स मशीन पर कोशिश कर सकते हैं या इसे अनुभव करने के लिए गूगल कोलेब इस्तेमाल कर सकते हैं.
 
 ```bash
 git clone https://github.com/OptimalScale/LMFlow.git
@@ -328,7 +329,7 @@ cd -
 इसके अतिरिक्त, हमारा लक्ष्य एक खुला और लोकतांत्रिक LLM साझा करने का मंच बनाना है जहां लोग अपने चेकपॉइंट और अनुभव साझा करके समुदाय के कौशलों को संगठित ढंग से सुधार सकते हैं। हम उन सभी लोगों का स्वागत करते हैं जो LLM में रूचि रखते हैं और एक खुले और मित्रवाही समुदाय का निर्माण करने में हमारे साथ शामिल होना चाहते हैं!
 
 चाहे आप एक शुरुआती हों या एक विशेषज्ञ, हम यह मानते हैं कि आप इस मंच से लाभ उठा सकते हैं। आओ हम साथ मिलकर एक जीवंत और नवाचारी LLM समुदाय का निर्माण करें!
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/04/ibvpAk.jpeg)
 

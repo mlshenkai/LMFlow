@@ -13,7 +13,7 @@ extracted from the MODEL_CONFIG_CLASSES.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, List
 
 from transformers.utils.versions import require_version
 
@@ -75,6 +75,8 @@ class ModelArguments:
     use_ram_optimized_load : bool
         a boolean indicating whether to use disk mapping when memory is not
         enough.
+    use_int8 : bool
+        a boolean indicating whether to load int8 quantization for inference.
     """
 
     model_name_or_path: Optional[str] = field(
@@ -99,6 +101,10 @@ class ModelArguments:
         default=None,
         metadata={"help": "If training from scratch, pass a model type from the list: " + ", ".join(MODEL_TYPES)},
     )
+    arch_type: Optional[str] = field(
+        default="decoder_only",
+        metadata={"help": "The architecture type of the model. Currently supported decoder_only or encoder_decoder"}
+    )
     config_overrides: Optional[str] = field(
         default=None,
         metadata={
@@ -106,6 +112,16 @@ class ModelArguments:
                 "Override some existing default config settings when a model is trained from scratch. Example: "
                 "n_embd=10,resid_pdrop=0.2,scale_attn_weights=false,summary_type=cls_index"
             )
+        },
+    )
+    arch_type: Optional[str] = field(
+        default="decoder_only",
+        metadata={
+            "help": (
+                "Model architecture type, e.g. \"decoder_only\","
+                " \"encoder_decoder\""
+            ),
+            "choices": ["decoder_only", "encoder_decoder", "text_regression"],
         },
     )
     config_name: Optional[str] = field(
@@ -157,6 +173,10 @@ class ModelArguments:
         default=32,
         metadata={"help": "Merging ratio between the fine-tuned model and the original. This is controlled by a parameter called alpha in the paper."},
     )
+    lora_target_modules: List[str] = field(
+        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name",
+                              }
+    )
     lora_dropout: float = field(
         default=0.1,
         metadata={"help": "The dropout rate in lora.linear."},
@@ -168,6 +188,19 @@ class ModelArguments:
     use_ram_optimized_load: bool = field(
         default=True,
         metadata={"help": "Whether use disk mapping when memory is not enough."}
+    )
+    use_flash_attention: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "whether use flash attention layer to reduce GPU memory with"
+                " higher time cost."
+            )
+        }
+    )
+    use_int8: bool = field(
+        default=False,
+        metadata={"help": "whether to load int8 quantization for inference"}
     )
 
     def __post_init__(self):
@@ -292,6 +325,16 @@ class DatasetArguments:
         default=None,
         metadata={"help": "The number of processes to use for the preprocessing."},
     )
+    group_texts_batch_size: int = field(
+        default=1000,
+        metadata={
+            "help": (
+                "Number of samples that will be grouped together to go though"
+                " `group_texts` operation. See `--disable_group_texts` for"
+                " detailed explanation of this operation."
+            )
+        }
+    )
     disable_group_texts: bool = field(
         default=False,
         metadata={
@@ -334,7 +377,9 @@ class FinetunerArguments(TrainingArguments):
     """
     Adapt transformers.TrainingArguments
     """
-    pass
+    eval_dataset_path: Optional[str] = field(
+        default=None, metadata={"help": "The path of the eval dataset to use."}
+    )
 
 
 @dataclass
@@ -456,7 +501,27 @@ class EvaluatorArguments:
             )
         },
     )
-
+    metric: Optional[str] = field(
+        default="accuracy",
+        metadata={
+            "help": "the metric the model will be evaluated on",
+            "choices": ["ppl", "perplexity", "acc", "accuracy", "nll", "neg_log_likelihood"],
+        },
+    )
+    inference_batch_size_per_device: Optional[int] = field(
+        default=1,
+        metadata={
+            "help": (
+                "every device will infer {inference_batch_size_per_device}"
+                " samples in parallel. The inferred results will be concatenaed"
+                " with inputs and attach a reward."
+            ),
+        },
+    )
+    use_accelerator_for_evaluator: bool = field(
+        default=False, metadata={"help": "Whether to use Huggingface Accelerator instead of Deepspeed"}
+    )
+    
 @dataclass
 class InferencerArguments:
     """
@@ -475,6 +540,13 @@ class InferencerArguments:
         mixed precision mode, whether to use bf16 or fp16
 
     """
+    device: str = field(
+        default="gpu",
+        metadata={
+            "help": "device of chatbot",
+            "choices": ["gpu", "cpu"],
+        },
+    )
     local_rank: int = field(
         default=-1,
         metadata={"help": "For distributed training: local_rank"
@@ -506,12 +578,101 @@ class InferencerArguments:
             "choices": ["bf16","fp16"],
         },
     )
+    do_sample: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "whether turn on true random sampling during inference."
+        },
+    )
 
+
+@dataclass
+class RaftAlignerArguments(TrainingArguments):
+    """
+    Define a class RaftAlignerArguments to configure raft aligner.
+    """
+    output_reward_path: Optional[str] = field(
+        default="tmp/raft_aligner/",
+        metadata={
+            "help": "The path of output rewards."
+        }
+    )
+    output_min_length: Optional[int] = field(
+        default=16,
+        metadata={
+            "help": (
+                "minimum length of the output token sequence generated from"
+                " model given an input."
+            ),
+        },
+    )
+    output_max_length: Optional[int] = field(
+        default=48,
+        metadata={
+            "help": (
+                "maximum length of the output token sequence generated from"
+                " model given an output."
+            ),
+        },
+    )
+    num_raft_iteration: Optional[int] = field(
+        default=20,
+        metadata={
+            "help": "number of iterations of the raft aligner."
+        },
+    )
+    raft_batch_size: Optional[int] = field(
+        default=320,
+        metadata={
+            "help": (
+                "only select {raft_batch_size} samples each time to"
+                " generate rewards and be ranked for STF training."
+            )
+        },
+    )
+    top_reward_percentage: Optional[int] = field(
+        default=0.2,
+        metadata={
+            "help": (
+                "only top {top_reward_percentage} samples in the raft batch,"
+                " (in terms of rewards), will be used for SFT the model."
+            ),
+        },
+    )
+    inference_batch_size_per_device: Optional[int] = field(
+        default=1,
+        metadata={
+            "help": (
+                "every device will infer {inference_batch_size_per_device}"
+                " samples in parallel. The inferred results will be concatenaed"
+                " with inputs and attach a reward."
+            ),
+        },
+    )
+
+@dataclass
+class BenchmarkingArguments:
+    dataset_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "benchmark dataset name provided by lmflow"
+        },
+    )
+    lm_evaluation_metric: Optional[str] = field(
+        default="accuracy",
+        metadata={
+            "help": "the metric the model will be evaluated on",
+            "choices": ["acc", "acc_norm", "bleu", "chrf", "em", "f1", "ppl", \
+                "ter", "r@1", "r@2", "mrr", "mc1", "mc2", "word_perplexity", \
+                    "byte_perplexity", "bits_per_byte"],
+        },
+    )
 
 PIPELINE_ARGUMENT_MAPPING = {
     "finetuner": FinetunerArguments,
     "evaluator": EvaluatorArguments,
     "inferencer": InferencerArguments,
+    "raft_aligner": RaftAlignerArguments,
 }
 
 

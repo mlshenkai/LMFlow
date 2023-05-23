@@ -20,7 +20,7 @@
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/OptimalScale/LMFlow/blob/main/LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 [![Doc](https://img.shields.io/badge/Website-Doc-ff69b4.svg)](https://optimalscale.github.io/LMFlow/)
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/05/i8gG4z.jpeg)
 
@@ -135,6 +135,10 @@ Instruction tuningの結果を含む、より詳細なパフォーマンスに�
 
 
 ## 1.Setup
+
+私たちのパッケージはLinuxオペレーティングシステム（Ubuntu 20.04）で全面的にテストされています。その他のオペレーティングシステムプラットフォーム（MacOS、Windows）はまだ全面的にテストされていません。
+予期せぬエラーが発生する可能性があります。Linuxマシンで試したり、Google Colabを使って体験したりすることができます。
+
 ```bash
 git clone https://github.com/OptimalScale/LMFlow.git
 cd LMFlow
@@ -320,7 +324,7 @@ cd -
 
 初心者でもエキスパートでも、私たちはこのプラットフォームから利益を得ることができると信じています。一緒に活気ある革新的なLLMコミュニティを築いていきましょう！
 
-[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/srGxyazbNs)
+[![Embark](https://img.shields.io/badge/discord-LMFlow-%237289da.svg?logo=discord)](https://discord.gg/u9VJNpzhvA)
 [![slack badge](https://img.shields.io/badge/Slack-join-blueviolet?logo=slack&amp)](https://join.slack.com/t/lmflow/shared_invite/zt-1s6egx12s-THlwHuCjF6~JGKmx7JoJPA)
 [![WeChat badge](https://img.shields.io/badge/WeChat-Join-brightgreen?logo=wechat&amp)](https://i.328888.xyz/2023/04/05/i8gG4z.jpeg)
 

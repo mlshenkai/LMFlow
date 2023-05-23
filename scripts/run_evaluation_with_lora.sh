@@ -10,4 +10,6 @@ CUDA_VISIBLE_DEVICES=0 \
     --lora_model_path output_models/finetune_with_lora \
     --dataset_path data/alpaca/test \
     --prompt_structure "Input: {input}" \
-    --deepspeed examples/ds_config.json
+    --deepspeed examples/ds_config.json \
+    --inference_batch_size_per_device 1 \
+    --metric accuracy
